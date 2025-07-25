@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Download, Wand2, CheckCircle, XCircle } from "lucide-react";
+import { Download, Wand2, CheckCircle, XCircle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ImageFile, ProcessingSettings, BatchProcessingJob, ProcessedImage } from "@/types/image";
 import { ImageProcessor } from "@/lib/image-processor";
 import { useToast } from "@/hooks/use-toast";
+import { GlobalSettingsPanel } from "@/components/global-settings-panel";
 import { nanoid } from "nanoid";
 
 interface BatchProcessorProps {
@@ -13,9 +15,11 @@ interface BatchProcessorProps {
   onRemove: () => void;
 }
 
-export function BatchProcessor({ files, settings, onRemove }: BatchProcessorProps) {
+export function BatchProcessor({ files, settings: initialSettings, onRemove }: BatchProcessorProps) {
   const [job, setJob] = useState<BatchProcessingJob | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [settings, setSettings] = useState<ProcessingSettings>(initialSettings);
+  const [showSettings, setShowSettings] = useState(true);
   const { toast } = useToast();
 
   const startBatchProcessing = async () => {
@@ -24,7 +28,7 @@ export function BatchProcessor({ files, settings, onRemove }: BatchProcessorProp
     const newJob: BatchProcessingJob = {
       id: nanoid(),
       files,
-      settings,
+      settings, // Use current settings state
       status: 'pending',
       progress: 0,
       results: [],
@@ -119,6 +123,25 @@ export function BatchProcessor({ files, settings, onRemove }: BatchProcessorProp
         </Button>
       </div>
 
+      {/* Global Settings Panel */}
+      <div className="mb-8">
+        <Collapsible open={showSettings} onOpenChange={setShowSettings}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full mb-4">
+              <Settings className="w-4 h-4 mr-2" />
+              {showSettings ? 'Hide' : 'Show'} Batch Processing Settings
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <GlobalSettingsPanel
+              settings={settings}
+              onSettingsChange={setSettings}
+              showApplyButton={false}
+            />
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+
       {/* Processing Controls */}
       <div className="mb-6">
         <div className="flex items-center space-x-4 mb-4">
@@ -126,19 +149,51 @@ export function BatchProcessor({ files, settings, onRemove }: BatchProcessorProp
             onClick={startBatchProcessing}
             disabled={isProcessing}
             className="bg-primary text-white hover:bg-blue-600"
+            size="lg"
           >
             <Wand2 className="w-4 h-4 mr-2" />
-            {isProcessing ? 'Processing...' : 'Process All Images'}
+            {isProcessing ? 'Processing...' : 'Process All Images with Current Settings'}
           </Button>
           
           {job && job.status === 'completed' && job.results.some(r => r !== null) && (
             <Button
               onClick={downloadAll}
               className="bg-accent text-white hover:bg-emerald-600"
+              size="lg"
             >
               <Download className="w-4 h-4 mr-2" />
               Download All
             </Button>
+          )}
+        </div>
+
+        {/* Settings Summary */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <h4 className="font-medium text-slate-900 mb-2">Current Batch Settings:</h4>
+          <div className="text-sm text-slate-600 grid grid-cols-2 md:grid-cols-4 gap-2">
+            <span>Format: <strong>{settings.outputFormat.toUpperCase()}</strong></span>
+            <span>Quality: <strong>{settings.quality}%</strong></span>
+            <span>Size: <strong>{settings.width}×{settings.height}</strong></span>
+            <span>Watermark: <strong>{settings.watermark?.enabled ? 'Yes' : 'No'}</strong></span>
+          </div>
+          {(settings.filters.brightness !== 0 || settings.filters.contrast !== 0 || 
+            settings.filters.saturation !== 0 || settings.filters.blur > 0 || 
+            settings.filters.sepia > 0 || settings.filters.grayscale > 0 || 
+            settings.filters.vintage || settings.filters.sharpen > 0) && (
+            <div className="mt-2 text-sm text-slate-600">
+              <span>Filters: <strong>Applied</strong> ({
+                [
+                  settings.filters.brightness !== 0 && 'Brightness',
+                  settings.filters.contrast !== 0 && 'Contrast', 
+                  settings.filters.saturation !== 0 && 'Saturation',
+                  settings.filters.blur > 0 && 'Blur',
+                  settings.filters.sepia > 0 && 'Sepia',
+                  settings.filters.grayscale > 0 && 'Grayscale',
+                  settings.filters.vintage && 'Vintage',
+                  settings.filters.sharpen > 0 && 'Sharpen'
+                ].filter(Boolean).join(', ')
+              })</span>
+            </div>
           )}
         </div>
 
