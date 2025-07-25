@@ -22,7 +22,7 @@ export function Header() {
             <a href="#privacy" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
               Privacy
             </a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-slate-900 transition-colors font-medium flex items-center space-x-1">
+            <a href="https://github.com/psyzane" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-slate-900 transition-colors font-medium flex items-center space-x-1">
               <Github className="w-4 h-4" />
               <span>GitHub</span>
             </a>
