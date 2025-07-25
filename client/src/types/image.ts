@@ -28,7 +28,5 @@ export interface ProcessedImage {
   };
 }
 
-export type ProcessingMode = 'convert' | 'compress';
-
 export const SUPPORTED_FORMATS = ['jpeg', 'jpg', 'png', 'webp', 'gif', 'bmp'] as const;
 export const OUTPUT_FORMATS = ['jpeg', 'png', 'webp'] as const;

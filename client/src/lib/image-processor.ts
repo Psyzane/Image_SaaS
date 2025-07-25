@@ -102,10 +102,57 @@ export class ImageProcessor {
 
           onProgress?.(75);
 
-          // Convert to the desired format
+          // Convert to the desired format with proper compression
           const mimeType = this.getMimeType(settings.outputFormat);
-          const quality = settings.quality / 100;
-          const dataUrl = canvas.toDataURL(mimeType, quality);
+          let dataUrl: string;
+          
+          // For lossy formats (JPEG, WebP), apply quality compression
+          if (mimeType === 'image/jpeg' || mimeType === 'image/webp') {
+            const quality = Math.max(0.1, Math.min(1.0, settings.quality / 100));
+            dataUrl = canvas.toDataURL(mimeType, quality);
+          } else if (mimeType === 'image/png') {
+            // PNG compression strategy: reduce dimensions slightly if quality is low
+            if (settings.quality < 90) {
+              // Create a smaller canvas for compression
+              const compressionFactor = Math.max(0.5, settings.quality / 100);
+              const compressedCanvas = document.createElement('canvas');
+              const compressedCtx = compressedCanvas.getContext('2d');
+              
+              if (compressedCtx) {
+                const compressedWidth = Math.max(1, Math.floor(width * compressionFactor));
+                const compressedHeight = Math.max(1, Math.floor(height * compressionFactor));
+                
+                compressedCanvas.width = compressedWidth;
+                compressedCanvas.height = compressedHeight;
+                
+                compressedCtx.imageSmoothingEnabled = true;
+                compressedCtx.imageSmoothingQuality = 'high';
+                compressedCtx.drawImage(canvas, 0, 0, compressedWidth, compressedHeight);
+                
+                // Try both original size and compressed size, use whichever is smaller
+                const originalPngUrl = canvas.toDataURL(mimeType);
+                const compressedPngUrl = compressedCanvas.toDataURL(mimeType);
+                
+                const originalSize = this.calculateDataUrlSize(originalPngUrl);
+                const compressedSize = this.calculateDataUrlSize(compressedPngUrl);
+                
+                if (compressedSize < originalSize && compressedSize < imageFile.size) {
+                  dataUrl = compressedPngUrl;
+                  // Update dimensions to match compressed version
+                  width = compressedWidth;
+                  height = compressedHeight;
+                } else {
+                  dataUrl = originalPngUrl;
+                }
+              } else {
+                dataUrl = canvas.toDataURL(mimeType);
+              }
+            } else {
+              dataUrl = canvas.toDataURL(mimeType);
+            }
+          } else {
+            dataUrl = canvas.toDataURL(mimeType);
+          }
 
           onProgress?.(100);
 

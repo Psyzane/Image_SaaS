@@ -6,20 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { ImageFile, ProcessingSettings, ProcessedImage, ProcessingMode } from "@/types/image";
+import { ImageFile, ProcessingSettings, ProcessedImage } from "@/types/image";
 import { ImageProcessor } from "@/lib/image-processor";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProcessingPanelProps {
   imageFile: ImageFile;
-  mode: ProcessingMode;
   onRemove: () => void;
 }
 
-export function ProcessingPanel({ imageFile, mode, onRemove }: ProcessingPanelProps) {
+export function ProcessingPanel({ imageFile, onRemove }: ProcessingPanelProps) {
   const [settings, setSettings] = useState<ProcessingSettings>({
-    outputFormat: 'jpeg',
-    quality: 85,
+    outputFormat: imageFile.format.toLowerCase() === 'png' ? 'jpeg' : imageFile.format.toLowerCase(),
+    quality: 75,
     width: imageFile.dimensions.width,
     height: imageFile.dimensions.height,
     maintainAspectRatio: true,
@@ -153,8 +152,11 @@ export function ProcessingPanel({ imageFile, mode, onRemove }: ProcessingPanelPr
         {/* Left Panel - Controls */}
         <div className="space-y-6">
           <div>
-            <Label className="text-sm font-medium text-slate-700 mb-3 block">Output Format</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <Label className="text-sm font-medium text-slate-700 mb-3 block">
+              Output Format 
+              <span className="text-xs text-slate-500 font-normal ml-1">(JPEG for best compression)</span>
+            </Label>
+            <div className="grid grid-cols-3 gap-2">
               {formatButtons.map(({ format, label }) => (
                 <Button
                   key={format}
@@ -172,21 +174,29 @@ export function ProcessingPanel({ imageFile, mode, onRemove }: ProcessingPanelPr
           </div>
 
           <div>
-            <Label className="text-sm font-medium text-slate-700 mb-3 block">Quality</Label>
+            <Label className="text-sm font-medium text-slate-700 mb-3 block">
+              Compression Quality
+              <span className="text-xs text-slate-500 font-normal ml-1">(Lower = smaller file)</span>
+            </Label>
             <div className="space-y-3">
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-slate-600 min-w-0">0%</span>
+                <span className="text-xs text-slate-500 min-w-0">Small</span>
                 <Slider
                   value={[settings.quality]}
                   onValueChange={handleQualityChange}
                   max={100}
-                  step={1}
+                  min={10}
+                  step={5}
                   className="flex-1"
                 />
-                <span className="text-sm text-slate-600 min-w-0">100%</span>
+                <span className="text-xs text-slate-500 min-w-0">Large</span>
               </div>
               <div className="text-center">
                 <span className="text-lg font-semibold text-slate-900">{settings.quality}%</span>
+                <div className="text-xs text-slate-500">
+                  {settings.quality < 50 ? 'High compression' : 
+                   settings.quality < 80 ? 'Balanced' : 'High quality'}
+                </div>
               </div>
             </div>
           </div>
@@ -229,7 +239,7 @@ export function ProcessingPanel({ imageFile, mode, onRemove }: ProcessingPanelPr
             className="w-full bg-primary text-white hover:bg-blue-600"
           >
             <Wand2 className="w-4 h-4 mr-2" />
-            {isProcessing ? 'Processing...' : 'Process Image'}
+            {isProcessing ? 'Processing...' : 'Convert & Compress'}
           </Button>
         </div>
 

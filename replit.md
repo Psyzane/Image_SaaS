@@ -30,12 +30,17 @@ Preferred communication style: Simple, everyday language.
 
 1. **Client-Side Processing**: All image processing happens in the browser using Canvas API and FileReader, ensuring user privacy and eliminating server load for image operations.
 
-2. **Monorepo Structure**: The application uses a shared folder structure with:
+2. **Unified Processing Tool**: Merged format conversion and compression into a single, comprehensive image processing tool that handles both operations simultaneously.
+
+3. **Smart Compression**: Implements intelligent compression strategies:
+   - JPEG/WebP: Uses quality parameter for lossy compression
+   - PNG: Uses dimension reduction for compression when quality is below 90%
+   - Automatic format suggestions (JPEG recommended for best compression)
+
+4. **Monorepo Structure**: The application uses a shared folder structure with:
    - `client/` - React frontend
    - `server/` - Express backend
    - `shared/` - Shared TypeScript types and schemas
-
-3. **Database Schema**: Simple user management system with PostgreSQL, using Drizzle for type-safe database operations.
 
 ## Key Components
 
