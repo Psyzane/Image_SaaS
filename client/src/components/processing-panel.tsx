@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
-import { X, Wand2, Download } from "lucide-react";
+import { X, Wand2, Download, Settings, Palette, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageFile, ProcessingSettings, ProcessedImage } from "@/types/image";
 import { ImageProcessor } from "@/lib/image-processor";
 import { useToast } from "@/hooks/use-toast";
+import { FiltersPanel } from "@/components/filters-panel";
+import { WatermarkPanel } from "@/components/watermark-panel";
 
 interface ProcessingPanelProps {
   imageFile: ImageFile;
@@ -22,6 +25,24 @@ export function ProcessingPanel({ imageFile, onRemove }: ProcessingPanelProps) {
     width: imageFile.dimensions.width,
     height: imageFile.dimensions.height,
     maintainAspectRatio: true,
+    filters: {
+      brightness: 0,
+      contrast: 0,
+      saturation: 0,
+      blur: 0,
+      sepia: 0,
+      grayscale: 0,
+      vintage: false,
+      sharpen: 0,
+    },
+    watermark: {
+      enabled: false,
+      text: 'Watermark',
+      opacity: 50,
+      position: 'bottom-right',
+      fontSize: 24,
+      color: '#ffffff',
+    },
   });
   
   const [processedImage, setProcessedImage] = useState<ProcessedImage | null>(null);
@@ -150,88 +171,119 @@ export function ProcessingPanel({ imageFile, onRemove }: ProcessingPanelProps) {
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Left Panel - Controls */}
-        <div className="space-y-6">
-          <div>
-            <Label className="text-sm font-medium text-slate-700 mb-3 block">
-              Output Format 
-              <span className="text-xs text-slate-500 font-normal ml-1">(JPEG for best compression)</span>
-            </Label>
-            <div className="grid grid-cols-3 gap-2">
-              {formatButtons.map(({ format, label }) => (
-                <Button
-                  key={format}
-                  variant={settings.outputFormat === format ? "default" : "outline"}
-                  onClick={() => handleFormatChange(format)}
-                  className={settings.outputFormat === format 
-                    ? "bg-primary text-white hover:bg-blue-600" 
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </div>
+        <Tabs defaultValue="basic" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="basic" className="flex items-center space-x-2">
+              <Settings className="w-4 h-4" />
+              <span>Basic</span>
+            </TabsTrigger>
+            <TabsTrigger value="filters" className="flex items-center space-x-2">
+              <Palette className="w-4 h-4" />
+              <span>Filters</span>
+            </TabsTrigger>
+            <TabsTrigger value="watermark" className="flex items-center space-x-2">
+              <Type className="w-4 h-4" />
+              <span>Watermark</span>
+            </TabsTrigger>
+          </TabsList>
 
-          <div>
-            <Label className="text-sm font-medium text-slate-700 mb-3 block">
-              Compression Quality
-              <span className="text-xs text-slate-500 font-normal ml-1">(Lower = smaller file)</span>
-            </Label>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-4">
-                <span className="text-xs text-slate-500 min-w-0">Small</span>
-                <Slider
-                  value={[settings.quality]}
-                  onValueChange={handleQualityChange}
-                  max={100}
-                  min={10}
-                  step={5}
-                  className="flex-1"
-                />
-                <span className="text-xs text-slate-500 min-w-0">Large</span>
+          <TabsContent value="basic" className="space-y-6">
+            <div>
+              <Label className="text-sm font-medium text-slate-700 mb-3 block">
+                Output Format 
+                <span className="text-xs text-slate-500 font-normal ml-1">(JPEG for best compression)</span>
+              </Label>
+              <div className="grid grid-cols-3 gap-2">
+                {formatButtons.map(({ format, label }) => (
+                  <Button
+                    key={format}
+                    variant={settings.outputFormat === format ? "default" : "outline"}
+                    onClick={() => handleFormatChange(format)}
+                    className={settings.outputFormat === format 
+                      ? "bg-primary text-white hover:bg-blue-600" 
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }
+                  >
+                    {label}
+                  </Button>
+                ))}
               </div>
-              <div className="text-center">
-                <span className="text-lg font-semibold text-slate-900">{settings.quality}%</span>
-                <div className="text-xs text-slate-500">
-                  {settings.quality < 50 ? 'High compression' : 
-                   settings.quality < 80 ? 'Balanced' : 'High quality'}
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium text-slate-700 mb-3 block">
+                Compression Quality
+                <span className="text-xs text-slate-500 font-normal ml-1">(Lower = smaller file)</span>
+              </Label>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-4">
+                  <span className="text-xs text-slate-500 min-w-0">Small</span>
+                  <Slider
+                    value={[settings.quality]}
+                    onValueChange={handleQualityChange}
+                    max={100}
+                    min={10}
+                    step={5}
+                    className="flex-1"
+                  />
+                  <span className="text-xs text-slate-500 min-w-0">Large</span>
+                </div>
+                <div className="text-center">
+                  <span className="text-lg font-semibold text-slate-900">{settings.quality}%</span>
+                  <div className="text-xs text-slate-500">
+                    {settings.quality < 50 ? 'High compression' : 
+                     settings.quality < 80 ? 'Balanced' : 'High quality'}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-medium text-slate-700 mb-2 block">Width (px)</Label>
-              <Input
-                type="number"
-                value={settings.width}
-                onChange={(e) => handleWidthChange(parseInt(e.target.value) || 0)}
-                className="border-slate-200 focus:border-primary focus:ring-primary"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-slate-700 mb-2 block">Width (px)</Label>
+                <Input
+                  type="number"
+                  value={settings.width}
+                  onChange={(e) => handleWidthChange(parseInt(e.target.value) || 0)}
+                  className="border-slate-200 focus:border-primary focus:ring-primary"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-slate-700 mb-2 block">Height (px)</Label>
+                <Input
+                  type="number"
+                  value={settings.height}
+                  onChange={(e) => handleHeightChange(parseInt(e.target.value) || 0)}
+                  className="border-slate-200 focus:border-primary focus:ring-primary"
+                />
+              </div>
             </div>
-            <div>
-              <Label className="text-sm font-medium text-slate-700 mb-2 block">Height (px)</Label>
-              <Input
-                type="number"
-                value={settings.height}
-                onChange={(e) => handleHeightChange(parseInt(e.target.value) || 0)}
-                className="border-slate-200 focus:border-primary focus:ring-primary"
-              />
-            </div>
-          </div>
 
-          <div className="flex items-center space-x-3">
-            <Checkbox
-              id="maintain-ratio"
-              checked={settings.maintainAspectRatio}
-              onCheckedChange={handleMaintainAspectRatio}
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="maintain-ratio"
+                checked={settings.maintainAspectRatio}
+                onCheckedChange={handleMaintainAspectRatio}
+              />
+              <Label htmlFor="maintain-ratio" className="text-sm text-slate-700">
+                Maintain aspect ratio
+              </Label>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="filters">
+            <FiltersPanel
+              filters={settings.filters}
+              onFiltersChange={(filters) => setSettings(prev => ({ ...prev, filters }))}
             />
-            <Label htmlFor="maintain-ratio" className="text-sm text-slate-700">
-              Maintain aspect ratio
-            </Label>
-          </div>
+          </TabsContent>
+
+          <TabsContent value="watermark">
+            <WatermarkPanel
+              watermark={settings.watermark!}
+              onWatermarkChange={(watermark) => setSettings(prev => ({ ...prev, watermark }))}
+            />
+          </TabsContent>
 
           <Button
             onClick={processImage}
@@ -241,7 +293,7 @@ export function ProcessingPanel({ imageFile, onRemove }: ProcessingPanelProps) {
             <Wand2 className="w-4 h-4 mr-2" />
             {isProcessing ? 'Processing...' : 'Convert & Compress'}
           </Button>
-        </div>
+        </Tabs>
 
         {/* Right Panel - Preview */}
         <div className="space-y-4">

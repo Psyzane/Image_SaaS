@@ -1,20 +1,67 @@
 import { useState } from "react";
 import { Header } from "@/components/header";
 import { FileUpload } from "@/components/file-upload";
+import { BatchUpload } from "@/components/batch-upload";
 import { ProcessingPanel } from "@/components/processing-panel";
+import { BatchProcessor } from "@/components/batch-processor";
 import { FeaturesSection } from "@/components/features-section";
 import { Footer } from "@/components/footer";
-import { ImageFile } from "@/types/image";
+import { ImageFile, ProcessingSettings } from "@/types/image";
+import { Button } from "@/components/ui/button";
+import { Image, Images } from "lucide-react";
+
+type ProcessingMode = 'single' | 'batch';
 
 export default function Home() {
+  const [processingMode, setProcessingMode] = useState<ProcessingMode>('single');
   const [uploadedImage, setUploadedImage] = useState<ImageFile | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<ImageFile[]>([]);
+  const [batchSettings, setBatchSettings] = useState<ProcessingSettings>({
+    outputFormat: 'jpeg',
+    quality: 75,
+    width: 1920,
+    height: 1080,
+    maintainAspectRatio: true,
+    filters: {
+      brightness: 0,
+      contrast: 0,
+      saturation: 0,
+      blur: 0,
+      sepia: 0,
+      grayscale: 0,
+      vintage: false,
+      sharpen: 0,
+    },
+    watermark: {
+      enabled: false,
+      text: 'Watermark',
+      opacity: 50,
+      position: 'bottom-right',
+      fontSize: 24,
+      color: '#ffffff',
+    },
+  });
 
   const handleFileUploaded = (imageFile: ImageFile) => {
     setUploadedImage(imageFile);
   };
 
+  const handleFilesUploaded = (imageFiles: ImageFile[]) => {
+    setUploadedFiles(imageFiles);
+  };
+
   const handleRemoveImage = () => {
     setUploadedImage(null);
+  };
+
+  const handleRemoveFiles = () => {
+    setUploadedFiles([]);
+  };
+
+  const switchToMode = (mode: ProcessingMode) => {
+    setProcessingMode(mode);
+    setUploadedImage(null);
+    setUploadedFiles([]);
   };
 
   return (
@@ -28,25 +75,64 @@ export default function Home() {
             Transform Images{" "}
             <span className="text-primary">Instantly</span>
           </h2>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            Convert formats, compress files, and resize images with our unified processing tool. All processing happens locally for maximum privacy and speed.
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
+            Convert formats, compress files, resize images, apply filters, and add watermarks. All processing happens locally for maximum privacy and speed.
           </p>
+
+          {/* Processing Mode Toggle */}
+          <div className="flex items-center justify-center space-x-4 mb-8">
+            <Button
+              variant={processingMode === 'single' ? 'default' : 'outline'}
+              onClick={() => switchToMode('single')}
+              className={processingMode === 'single' 
+                ? "bg-primary text-white hover:bg-blue-600" 
+                : "border-slate-200 text-slate-600 hover:bg-slate-50"
+              }
+            >
+              <Image className="w-4 h-4 mr-2" />
+              Single Image
+            </Button>
+            <Button
+              variant={processingMode === 'batch' ? 'default' : 'outline'}
+              onClick={() => switchToMode('batch')}
+              className={processingMode === 'batch' 
+                ? "bg-primary text-white hover:bg-blue-600" 
+                : "border-slate-200 text-slate-600 hover:bg-slate-50"
+              }
+            >
+              <Images className="w-4 h-4 mr-2" />
+              Batch Processing
+            </Button>
+          </div>
         </div>
 
-        {/* File Upload Area */}
-        {!uploadedImage && (
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-8">
-            <FileUpload onFileUploaded={handleFileUploaded} />
-          </div>
-        )}
-
-        {/* Processing Panel */}
-        {uploadedImage && (
-          <ProcessingPanel
-            imageFile={uploadedImage}
-            onRemove={handleRemoveImage}
-          />
-        )}
+        {/* Upload Area */}
+        <div className="max-w-4xl mx-auto mb-8">
+          {processingMode === 'single' ? (
+            !uploadedImage ? (
+              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
+                <FileUpload onFileUploaded={handleFileUploaded} />
+              </div>
+            ) : (
+              <ProcessingPanel 
+                imageFile={uploadedImage} 
+                onRemove={handleRemoveImage}
+              />
+            )
+          ) : (
+            uploadedFiles.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
+                <BatchUpload onFilesUploaded={handleFilesUploaded} />
+              </div>
+            ) : (
+              <BatchProcessor
+                files={uploadedFiles}
+                settings={batchSettings}
+                onRemove={handleRemoveFiles}
+              />
+            )
+          )}
+        </div>
 
         {/* Features Section */}
         <FeaturesSection />

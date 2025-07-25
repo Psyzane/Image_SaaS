@@ -1,4 +1,4 @@
-import { ImageFile, ProcessingSettings, ProcessedImage } from '@/types/image';
+import { ImageFile, ProcessingSettings, ProcessedImage, ImageFilters, WatermarkSettings, BatchProcessingJob } from '@/types/image';
 
 export class ImageProcessor {
   static async loadImage(file: File): Promise<ImageFile> {
@@ -99,6 +99,14 @@ export class ImageProcessor {
 
           // Draw the resized image
           ctx.drawImage(img, 0, 0, width, height);
+
+          // Apply filters and effects
+          this.applyFilters(ctx, canvas, settings.filters);
+
+          // Apply watermark if enabled
+          if (settings.watermark?.enabled) {
+            this.applyWatermark(ctx, canvas, settings.watermark);
+          }
 
           onProgress?.(75);
 
@@ -215,17 +223,234 @@ export class ImageProcessor {
   }
 
   static validateFile(file: File): { valid: boolean; error?: string } {
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp'];
+    const maxSize = 50 * 1024 * 1024; // 50MB for RAW files
+    const supportedTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 
+      'image/tiff', 'image/x-canon-cr2', 'image/x-nikon-nef', 'image/x-sony-arw', 'image/x-adobe-dng'
+    ];
 
     if (file.size > maxSize) {
-      return { valid: false, error: 'File size must be less than 10MB' };
+      return { valid: false, error: 'File size must be less than 50MB' };
     }
 
-    if (!supportedTypes.includes(file.type)) {
-      return { valid: false, error: 'Unsupported file format. Please use JPEG, PNG, WebP, GIF, or BMP.' };
+    // Allow RAW formats based on file extension if MIME type isn't recognized
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    const rawExtensions = ['raw', 'cr2', 'nef', 'arw', 'dng', 'tiff', 'tif'];
+    
+    if (!supportedTypes.includes(file.type) && !rawExtensions.includes(extension || '')) {
+      return { valid: false, error: 'Unsupported file format. Please use JPEG, PNG, WebP, GIF, BMP, TIFF, or RAW formats.' };
     }
 
     return { valid: true };
+  }
+
+  static applyFilters(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, filters: ImageFilters) {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    // Apply brightness, contrast, and saturation
+    for (let i = 0; i < data.length; i += 4) {
+      let r = data[i];
+      let g = data[i + 1];
+      let b = data[i + 2];
+
+      // Brightness
+      if (filters.brightness !== 0) {
+        const brightness = filters.brightness * 2.55; // Convert to 0-255 range
+        r = Math.max(0, Math.min(255, r + brightness));
+        g = Math.max(0, Math.min(255, g + brightness));
+        b = Math.max(0, Math.min(255, b + brightness));
+      }
+
+      // Contrast
+      if (filters.contrast !== 0) {
+        const contrast = (filters.contrast + 100) / 100;
+        r = Math.max(0, Math.min(255, (r - 128) * contrast + 128));
+        g = Math.max(0, Math.min(255, (g - 128) * contrast + 128));
+        b = Math.max(0, Math.min(255, (b - 128) * contrast + 128));
+      }
+
+      // Saturation
+      if (filters.saturation !== 0) {
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        const saturation = (filters.saturation + 100) / 100;
+        r = Math.max(0, Math.min(255, gray + (r - gray) * saturation));
+        g = Math.max(0, Math.min(255, gray + (g - gray) * saturation));
+        b = Math.max(0, Math.min(255, gray + (b - gray) * saturation));
+      }
+
+      // Sepia
+      if (filters.sepia > 0) {
+        const sepiaStrength = filters.sepia / 100;
+        const sr = (r * 0.393 + g * 0.769 + b * 0.189) * sepiaStrength + r * (1 - sepiaStrength);
+        const sg = (r * 0.349 + g * 0.686 + b * 0.168) * sepiaStrength + g * (1 - sepiaStrength);
+        const sb = (r * 0.272 + g * 0.534 + b * 0.131) * sepiaStrength + b * (1 - sepiaStrength);
+        r = Math.max(0, Math.min(255, sr));
+        g = Math.max(0, Math.min(255, sg));
+        b = Math.max(0, Math.min(255, sb));
+      }
+
+      // Grayscale
+      if (filters.grayscale > 0) {
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        const grayStrength = filters.grayscale / 100;
+        r = r * (1 - grayStrength) + gray * grayStrength;
+        g = g * (1 - grayStrength) + gray * grayStrength;
+        b = b * (1 - grayStrength) + gray * grayStrength;
+      }
+
+      // Vintage effect
+      if (filters.vintage) {
+        r = Math.max(0, Math.min(255, r * 0.9 + 30));
+        g = Math.max(0, Math.min(255, g * 0.85 + 20));
+        b = Math.max(0, Math.min(255, b * 0.7 + 10));
+      }
+
+      data[i] = r;
+      data[i + 1] = g;
+      data[i + 2] = b;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+
+    // Apply blur using CSS filter (more efficient for blur)
+    if (filters.blur > 0) {
+      ctx.filter = `blur(${filters.blur}px)`;
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      if (tempCtx) {
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        tempCtx.drawImage(canvas, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(tempCanvas, 0, 0);
+      }
+      ctx.filter = 'none';
+    }
+
+    // Apply sharpening
+    if (filters.sharpen > 0) {
+      this.applySharpen(ctx, canvas, filters.sharpen / 100);
+    }
+  }
+
+  static applySharpen(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, strength: number) {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const width = canvas.width;
+    const height = canvas.height;
+    const sharpenKernel = [
+      0, -1 * strength, 0,
+      -1 * strength, 1 + 4 * strength, -1 * strength,
+      0, -1 * strength, 0
+    ];
+
+    const newData = new Uint8ClampedArray(data);
+
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        for (let c = 0; c < 3; c++) {
+          let sum = 0;
+          for (let ky = -1; ky <= 1; ky++) {
+            for (let kx = -1; kx <= 1; kx++) {
+              const idx = ((y + ky) * width + (x + kx)) * 4 + c;
+              sum += data[idx] * sharpenKernel[(ky + 1) * 3 + (kx + 1)];
+            }
+          }
+          newData[(y * width + x) * 4 + c] = Math.max(0, Math.min(255, sum));
+        }
+      }
+    }
+
+    const newImageData = new ImageData(newData, width, height);
+    ctx.putImageData(newImageData, 0, 0);
+  }
+
+  static applyWatermark(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, watermark: WatermarkSettings) {
+    ctx.save();
+    
+    const fontSize = Math.max(12, Math.min(72, watermark.fontSize));
+    ctx.font = `${fontSize}px Arial, sans-serif`;
+    ctx.fillStyle = watermark.color;
+    ctx.globalAlpha = watermark.opacity / 100;
+
+    const textMetrics = ctx.measureText(watermark.text);
+    const textWidth = textMetrics.width;
+    const textHeight = fontSize;
+
+    let x = 0;
+    let y = 0;
+
+    switch (watermark.position) {
+      case 'top-left':
+        x = 20;
+        y = textHeight + 20;
+        break;
+      case 'top-right':
+        x = canvas.width - textWidth - 20;
+        y = textHeight + 20;
+        break;
+      case 'bottom-left':
+        x = 20;
+        y = canvas.height - 20;
+        break;
+      case 'bottom-right':
+        x = canvas.width - textWidth - 20;
+        y = canvas.height - 20;
+        break;
+      case 'center':
+        x = (canvas.width - textWidth) / 2;
+        y = (canvas.height + textHeight) / 2;
+        break;
+    }
+
+    ctx.fillText(watermark.text, x, y);
+    ctx.restore();
+  }
+
+  static async processBatch(
+    job: BatchProcessingJob,
+    onProgress?: (progress: number) => void,
+    onFileComplete?: (index: number, result: ProcessedImage | null, error?: string) => void
+  ): Promise<BatchProcessingJob> {
+    const updatedJob: BatchProcessingJob = { 
+      ...job, 
+      status: 'processing', 
+      results: [], 
+      errors: [] 
+    };
+    
+    for (let i = 0; i < job.files.length; i++) {
+      try {
+        onProgress?.((i / job.files.length) * 100);
+        
+        const result = await this.processImage(job.files[i], job.settings, (fileProgress) => {
+          const overallProgress = ((i + fileProgress / 100) / job.files.length) * 100;
+          onProgress?.(overallProgress);
+        });
+        
+        updatedJob.results.push(result);
+        onFileComplete?.(i, result);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        updatedJob.errors.push(`File ${i + 1}: ${errorMessage}`);
+        updatedJob.results.push(null);
+        onFileComplete?.(i, null, errorMessage);
+      }
+    }
+
+    updatedJob.status = updatedJob.errors.length === 0 ? 'completed' : 'failed';
+    updatedJob.progress = 100;
+    
+    return updatedJob;
+  }
+
+  static downloadBatch(results: ProcessedImage[], originalFiles: ImageFile[], settings: ProcessingSettings) {
+    results.forEach((result, index) => {
+      const originalFile = originalFiles[index];
+      if (originalFile && result) {
+        this.downloadImage(result.dataUrl, originalFile.name, settings.outputFormat);
+      }
+    });
   }
 }
