@@ -38,6 +38,8 @@ export interface WatermarkSettings {
   position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
   fontSize: number;
   color: string;
+  fontFamily: string;
+  angle: number; // -45 to 45 degrees
 }
 
 export interface ProcessedImage {

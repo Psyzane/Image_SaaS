@@ -369,8 +369,9 @@ export class ImageProcessor {
   static applyWatermark(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, watermark: WatermarkSettings) {
     ctx.save();
     
-    const fontSize = Math.max(12, Math.min(72, watermark.fontSize));
-    ctx.font = `${fontSize}px Arial, sans-serif`;
+    const fontSize = Math.max(12, Math.min(200, watermark.fontSize));
+    const fontFamily = watermark.fontFamily || 'Arial';
+    ctx.font = `${fontSize}px ${fontFamily}, sans-serif`;
     ctx.fillStyle = watermark.color;
     ctx.globalAlpha = watermark.opacity / 100;
 
@@ -404,7 +405,15 @@ export class ImageProcessor {
         break;
     }
 
-    ctx.fillText(watermark.text, x, y);
+    // Apply rotation if angle is specified
+    if (watermark.angle && watermark.angle !== 0) {
+      ctx.translate(x + textWidth / 2, y - textHeight / 2);
+      ctx.rotate((watermark.angle * Math.PI) / 180);
+      ctx.fillText(watermark.text, -textWidth / 2, textHeight / 2);
+    } else {
+      ctx.fillText(watermark.text, x, y);
+    }
+    
     ctx.restore();
   }
 

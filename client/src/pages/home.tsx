@@ -39,6 +39,8 @@ export default function Home() {
       position: 'bottom-right',
       fontSize: 24,
       color: '#ffffff',
+      fontFamily: 'Arial',
+      angle: 0,
     },
   });
 

@@ -10,6 +10,19 @@ interface WatermarkPanelProps {
   onWatermarkChange: (watermark: WatermarkSettings) => void;
 }
 
+const FONT_OPTIONS = [
+  { value: 'Arial', label: 'Arial' },
+  { value: 'Helvetica', label: 'Helvetica' },
+  { value: 'Times New Roman', label: 'Times New Roman' },
+  { value: 'Georgia', label: 'Georgia' },
+  { value: 'Verdana', label: 'Verdana' },
+  { value: 'Trebuchet MS', label: 'Trebuchet MS' },
+  { value: 'Impact', label: 'Impact' },
+  { value: 'Courier New', label: 'Courier New' },
+  { value: 'Comic Sans MS', label: 'Comic Sans MS' },
+  { value: 'Palatino', label: 'Palatino' },
+];
+
 export function WatermarkPanel({ watermark, onWatermarkChange }: WatermarkPanelProps) {
   const updateWatermark = (key: keyof WatermarkSettings, value: any) => {
     onWatermarkChange({
@@ -80,14 +93,49 @@ export function WatermarkPanel({ watermark, onWatermarkChange }: WatermarkPanelP
 
           <div>
             <Label className="text-sm font-medium text-slate-700 mb-2 block">
+              Font Family
+            </Label>
+            <Select
+              value={watermark.fontFamily}
+              onValueChange={(value) => updateWatermark('fontFamily', value)}
+            >
+              <SelectTrigger className="border-slate-200">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FONT_OPTIONS.map((font) => (
+                  <SelectItem key={font.value} value={font.value}>
+                    <span style={{ fontFamily: font.value }}>{font.label}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium text-slate-700 mb-2 block">
               Font Size ({watermark.fontSize}px)
             </Label>
             <Slider
               value={[watermark.fontSize]}
               onValueChange={(value) => updateWatermark('fontSize', value[0])}
               min={12}
-              max={72}
+              max={200}
               step={2}
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium text-slate-700 mb-2 block">
+              Angle ({watermark.angle}°)
+            </Label>
+            <Slider
+              value={[watermark.angle]}
+              onValueChange={(value) => updateWatermark('angle', value[0])}
+              min={-45}
+              max={45}
+              step={1}
               className="w-full"
             />
           </div>
