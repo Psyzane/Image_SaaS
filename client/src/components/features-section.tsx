@@ -66,12 +66,26 @@ export function FeaturesSection() {
         {features.map((feature, index) => {
           const Icon = feature.icon;
           return (
-            <div key={index} className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
-              <div className={`w-12 h-12 ${feature.iconBg} rounded-lg flex items-center justify-center mb-4`}>
-                <Icon className={`${feature.iconColor} w-6 h-6`} />
+            <div 
+              key={index} 
+              className="group bg-white rounded-xl p-6 shadow-lg border border-slate-200 hover:shadow-2xl hover:border-primary/20 hover:-translate-y-2 transition-all duration-300 ease-out cursor-pointer"
+              style={{
+                animationDelay: `${index * 100}ms`,
+                animation: `fadeInUp 0.6s ease-out forwards`
+              }}
+            >
+              <div className={`w-12 h-12 ${feature.iconBg} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 ease-out`}>
+                <Icon className={`${feature.iconColor} w-6 h-6 group-hover:scale-110 transition-transform duration-300 ease-out`} />
               </div>
-              <h4 className="text-xl font-semibold text-slate-900 mb-3">{feature.title}</h4>
-              <p className="text-slate-600">{feature.description}</p>
+              <h4 className="text-xl font-semibold text-slate-900 mb-3 group-hover:text-primary transition-colors duration-300">
+                {feature.title}
+              </h4>
+              <p className="text-slate-600 group-hover:text-slate-700 transition-colors duration-300 leading-relaxed">
+                {feature.description}
+              </p>
+              
+              {/* Animated bottom border */}
+              <div className="mt-4 w-0 h-1 bg-gradient-to-r from-primary to-accent rounded-full group-hover:w-full transition-all duration-500 ease-out"></div>
             </div>
           );
         })}

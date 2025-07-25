@@ -138,6 +138,66 @@ export default function Home() {
 
         {/* Features Section */}
         <FeaturesSection />
+
+        {/* Contact Section */}
+        <section id="contact" className="py-16 bg-white rounded-2xl shadow-lg border border-slate-200 mt-16">
+          <div className="text-center mb-8">
+            <h3 className="text-3xl font-bold text-slate-900 mb-4">Get in Touch</h3>
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+              Have questions or feedback? We'd love to hear from you.
+            </p>
+          </div>
+          <div className="max-w-md mx-auto text-center">
+            <p className="text-slate-600 mb-4">
+              Send us an email and we'll get back to you as soon as possible.
+            </p>
+            <a 
+              href="mailto:hello@imageflow.app" 
+              className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+            >
+              Contact Us
+            </a>
+          </div>
+        </section>
+
+        {/* Privacy Section */}
+        <section id="privacy" className="py-16 mt-16">
+          <div className="text-center mb-8">
+            <h3 className="text-3xl font-bold text-slate-900 mb-4">Your Privacy Matters</h3>
+          </div>
+          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
+            <div className="grid md:grid-cols-2 gap-8">
+              <div>
+                <h4 className="text-xl font-semibold text-slate-900 mb-4">100% Client-Side Processing</h4>
+                <p className="text-slate-600 leading-relaxed">
+                  All image processing happens directly in your browser. Your images are never uploaded to our servers, 
+                  ensuring complete privacy and security. What happens on your device, stays on your device.
+                </p>
+              </div>
+              <div>
+                <h4 className="text-xl font-semibold text-slate-900 mb-4">No Data Collection</h4>
+                <p className="text-slate-600 leading-relaxed">
+                  We don't track, store, or analyze your images or personal data. No cookies, no analytics, 
+                  no third-party trackers. Your creative work remains completely private.
+                </p>
+              </div>
+              <div>
+                <h4 className="text-xl font-semibold text-slate-900 mb-4">Open Source</h4>
+                <p className="text-slate-600 leading-relaxed">
+                  Our codebase is transparent and open for inspection. You can verify our privacy claims 
+                  and even run the application locally if desired.
+                </p>
+              </div>
+              <div>
+                <h4 className="text-xl font-semibold text-slate-900 mb-4">Secure by Design</h4>
+                <p className="text-slate-600 leading-relaxed">
+                  Built with modern web security standards. All processing uses secure browser APIs 
+                  with no external dependencies for image manipulation.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer />

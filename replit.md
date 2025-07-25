@@ -8,6 +8,15 @@ This is a modern image processing web application built with React and Express t
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (July 25, 2025)
+
+✓ Enhanced navigation with streamlined links (Features, Contact, Privacy, GitHub)
+✓ Improved tab hover states with better transitions and text visibility
+✓ Added micro-interactions to features section with staggered animations
+✓ Enhanced feature cards with hover effects, scaling, rotation, and animated borders
+✓ Added comprehensive Contact and Privacy sections to landing page
+✓ Improved footer layout with consolidated navigation links
+
 ## System Architecture
 
 ### Frontend Architecture

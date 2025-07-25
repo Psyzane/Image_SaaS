@@ -1,4 +1,4 @@
-import { Images } from "lucide-react";
+import { Images, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
@@ -13,15 +13,19 @@ export function Header() {
             <h1 className="text-xl font-bold text-slate-900">ImageFlow</h1>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
-            <a href="#features" className="text-slate-600 hover:text-slate-900 transition-colors">
+            <a href="#features" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
               Features
             </a>
-            <a href="#pricing" className="text-slate-600 hover:text-slate-900 transition-colors">
-              Pricing
+            <a href="#contact" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
+              Contact
             </a>
-            <Button className="bg-primary text-white hover:bg-blue-600">
-              Get Started
-            </Button>
+            <a href="#privacy" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
+              Privacy
+            </a>
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-slate-900 transition-colors font-medium flex items-center space-x-1">
+              <Github className="w-4 h-4" />
+              <span>GitHub</span>
+            </a>
           </nav>
           <button className="md:hidden p-2">
             <div className="w-6 h-6 flex flex-col justify-center items-center">
